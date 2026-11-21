@@ -17,20 +17,25 @@ JOKE = (
 MAX_LENGTH = 280
 
 
+def validate(text: str) -> str | None:
+    """Return the reason the joke is invalid, or None when it is fine."""
+    if not text or not text.strip():
+        return "empty-or-whitespace"
+    if "\n" in text or "\r" in text:
+        return "not-single-line"
+    if any(ord(ch) < 0x20 and ch not in ("\t",) for ch in text):
+        return "control-character"
+    if len(text) > MAX_LENGTH:
+        return "over-limit-%d-of-%d" % (len(text), MAX_LENGTH)
+    return None
+
+
 def main() -> int:
     output_path = os.environ.get("ENTRY_OUTPUT", "/output/entry.txt")
 
-    if not JOKE or not JOKE.strip():
-        print("error: joke is empty or only whitespace", file=sys.stderr)
-        return 1
-    if "\n" in JOKE or "\r" in JOKE:
-        print("error: joke must be a single line", file=sys.stderr)
-        return 1
-    if len(JOKE) > MAX_LENGTH:
-        print(
-            "error: joke is %d characters, over the %d limit" % (len(JOKE), MAX_LENGTH),
-            file=sys.stderr,
-        )
+    problem = validate(JOKE)
+    if problem is not None:
+        print("error: joke invalid (%s)" % problem, file=sys.stderr)
         return 1
 
     parent = os.path.dirname(os.path.abspath(output_path))
